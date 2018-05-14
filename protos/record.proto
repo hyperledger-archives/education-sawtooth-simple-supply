@@ -1,0 +1,49 @@
+// Copyright 2018 Intel Corporation
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+// -----------------------------------------------------------------------------
+
+syntax = "proto3";
+
+
+message Record {
+    message Owner {
+        // Public key of the agent who owns the record
+        string agent_id = 1;
+
+        // Approximately when the owner was updated, as a Unix UTC timestamp
+        uint64 timestamp = 2;
+    }
+
+    message Location {
+        // Coordinates are expected to be in millionths of a degree
+        sint64 latitude = 1;
+        sint64 longitude = 2;
+
+        // Approximately when the location was updated, as a Unix UTC timestamp
+        uint64 timestamp = 3;
+    }
+
+    // The user-defined natural key which identifies the object in the
+    // real world (for example a serial number)
+    string record_id = 1;
+
+    // Ordered oldest to newest by timestamp
+    repeated Owner owners = 2;
+    repeated Location locations = 3;
+}
+
+
+message RecordContainer {
+    repeated Record entries = 1;
+}
