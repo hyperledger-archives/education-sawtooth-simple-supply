@@ -1,0 +1,331 @@
+swagger: '2.0'
+info:
+  version: 0.0.0
+  title: Sawtooth Simple Supply REST API
+consumes:
+  - application/json
+produces:
+  - application/json
+securityDefinitions:
+  AuthToken:
+    type: apiKey
+    in: header
+    name: Authorization
+paths:
+  /authorization:
+    post:
+      description: Requests an authorization token for a registered agent
+      parameters:
+        - name: credentials
+          description: Authorization info to be authenticated by the server
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/AuthCredentials'
+      responses:
+        '200':
+          description: Success response with authorization token
+          schema:
+            type: object
+            properties:
+              authorization:
+                $ref: '#/definitions/AuthToken'
+        '400':
+          $ref: '#/responses/400BadRequest'
+        '500':
+          $ref: '#/responses/500ServerError'
+  /agents:
+    post:
+      description: Creates a new agent
+      parameters:
+        - name: agent
+          description: Parameters for the new agent
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/NewAgentBody'
+      responses:
+        '200':
+          description: Success response with the new agent and auth token
+          schema:
+            type: object
+            properties:
+              authorization:
+                $ref: '#/definitions/AuthToken'
+              agent:
+                $ref: '#/definitions/AgentObject'
+        '400':
+          $ref: '#/responses/400BadRequest'
+        '500':
+          $ref: '#/responses/500ServerError'
+    get:
+      description: Fetches the complete details of all agents
+      responses:
+        '200':
+          description: Success response with a list of all agents
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/AgentObject'
+        '400':
+          $ref: '#/responses/400BadRequest'
+        '500':
+          $ref: '#/responses/500ServerError'
+  '/agents/{agent_id}':
+    parameters:
+      - $ref: '#/parameters/agent_id'
+    get:
+      description: Fetches the complete details of a particular agent
+      responses:
+        '200':
+          description: Success response with the requested agent
+          schema:
+            $ref: '#/definitions/AgentObject'
+        '400':
+          $ref: '#/responses/400BadRequest'
+        '404':
+          $ref: '#/responses/404NotFound'
+        '500':
+          $ref: '#/responses/500ServerError'
+  /records:
+    post:
+      description: Creates a new record
+      security:
+        - AuthToken: []
+      parameters:
+        - name: record
+          description: Parameters for the new record
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/NewRecordBody'
+      responses:
+        '200':
+          description: Success response with the new record
+          schema:
+            $ref: '#/definitions/RecordObject'
+        '400':
+          $ref: '#/responses/400BadRequest'
+        '500':
+          $ref: '#/responses/500ServerError'
+    get:
+      description: Fetches complete details of all records
+      responses:
+        '200':
+          description: Success response with a list of all records
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/RecordObject'
+        '400':
+          $ref: '#/responses/400BadRequest'
+        '500':
+          $ref: '#/responses/500ServerError'
+  '/records/{record_id}':
+    parameters:
+      - $ref: '#/parameters/record_id'
+    get:
+      description: Fetches the complete details of a record
+      responses:
+        '200':
+          description: Success response with the requested record
+          schema:
+            $ref: '#/definitions/RecordObject'
+        '400':
+          $ref: '#/responses/400BadRequest'
+        '404':
+          $ref: '#/responses/404NotFound'
+        '500':
+          $ref: '#/responses/500ServerError'
+  '/records/{record_id}/transfer':
+    parameters:
+      - $ref: '#/parameters/record_id'
+    post:
+      description: Transfers a record to a new owner
+      security:
+        - AuthToken: []
+      parameters:
+        - name: transfer
+          description: Updated owner parameter
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/TransferRecordBody'
+      responses:
+        '200':
+          description: Success response with updated record
+          schema:
+            $ref: '#/definitions/RecordObject'
+        '400':
+          $ref: '#/responses/400BadRequest'
+        '404':
+          $ref: '#/responses/404NotFound'
+        '500':
+          $ref: '#/responses/500ServerError'
+  '/records/{record_id}/update':
+    parameters:
+      - $ref: '#/parameters/record_id'
+    post:
+      description: Updates a record's location
+      security:
+        - AuthToken: []
+      parameters:
+        - name: update
+          description: Updated location parameters
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/UpdateRecordBody'
+      responses:
+        '200':
+          description: Success response with updated record
+          schema:
+            $ref: '#/definitions/RecordObject'
+        '400':
+          $ref: '#/responses/400BadRequest'
+        '404':
+          $ref: '#/responses/404NotFound'
+        '500':
+          $ref: '#/responses/500ServerError'
+responses:
+  400BadRequest:
+    description: Client request was invalid
+    schema:
+      $ref: '#/definitions/ErrorObject'
+  404NotFound:
+    description: Key or id did not match any resource
+    schema:
+      $ref: '#/definitions/ErrorObject'
+  500ServerError:
+    description: Something went wrong within the REST API
+    schema:
+      $ref: '#/definitions/ErrorObject'
+definitions:
+  AgentObject:
+    properties:
+      public_key:
+        description: The agent's unique public key
+        type: string
+        example: '02178c1bcdb25407394348f1ff5273adae287d8ea328184546837957e71c7de57a'
+      name:
+        description: A human-readable name identifying the agent
+        type: string
+        example: 'Alice'
+      timestamp:
+        description: Approximately when the agent was registered, as a Unix UTC timestamp
+        type: number
+        example: 20180124130651
+  AuthCredentials:
+    properties:
+      public_key:
+        description: The agent's unique public key
+        type: string
+        example: '02178c1bcdb25407394348f1ff5273adae287d8ea328184546837957e71c7de57a'
+      password:
+        description: Password of the agent attempting to authenticate
+        type: string
+        example: 'password12345'
+  AuthToken:
+    description: A token used to authorize client requests
+    type: string
+    example: >-
+      eyJpYXQiOjE1MTA4NjM5NzksImV4cCI6MTUxMDg2NzU3OSwiYWxnIjoiSFMyNTYifQ.eyJpZCI6IjAyYTA2ZjM0NGM2MDc0ZTRiZDBjYThhMmFiZTQ1ZWU2ZWM5MmJmOWNkZDdiN2E2N2M4MDQzNTBiZmZmNGQ0YThjMCJ9.mM_uwZ1wrdag5PoCNThn_0gzZpsIhC_xSsa8xIFxggs
+  ErrorObject:
+    properties:
+      error:
+        description: A message describing the error that occured
+        type: string
+        example: 'A record can only be transferred by its owner'
+  LocationObject:
+    properties:
+      latitude:
+        description: Latitude of the record in millionths of digits
+        type: number
+        example: 44.982734
+      longitude:
+        description: Longitude of the record in millionths of digits
+        type: number
+        example: -93.272107
+      timestamp:
+        description: Unix UTC timestamp of when the Location update was submitted
+        type: number
+        example: 20180124130651
+  NewAgentBody:
+    properties:
+      name:
+        description: A human-readable name identifying the new agent
+        type: string
+        example: 'Alice'
+      password:
+        description: Password of the agent attempting to authenticate
+        type: string
+        example: 'password12345'
+  NewRecordBody:
+    properties:
+      latitude:
+        description: Initial latitude of the record in millionths of digits
+        type: number
+        example: 44.982734
+      longitude:
+        description: Initial longitude of the record in millionths of digits
+        type: number
+        example: -93.272107
+      record_id:
+        description: User-defined natural key which identifies the object
+        type: string
+        example: 'fish-44'
+  OwnerObject:
+    properties:
+      agent_id:
+        description: Public key of a particular agent
+        type: string
+        example: 02178c1bcdb25407394348f1ff5273adae287d8ea328184546837957e71c7de57a
+      timestamp:
+        description: Unix UTC timestamp of when the ownership update was submitted
+        type: number
+        example: 20180124130651
+  RecordObject:
+    properties:
+      record_id:
+        description: The user-defined natural key which identifies the record
+        type: string
+        example: 'fish-44'
+      owners:
+        type: array
+        items:
+          $ref: '#/definitions/OwnerObject'
+      locations:
+        type: array
+        items:
+          $ref: '#/definitions/LocationObject'
+  TransferRecordBody:
+    properties:
+      receiving_agent:
+        description: Public key of a particular agent
+        type: string
+        example: '02178c1bcdb25407394348f1ff5273adae287d8ea328184546837957e71c7de57a'
+  UpdateRecordBody:
+    properties:
+      latitude:
+        description: Initial latitude of the record in millionths of digits
+        type: number
+        example: 44.982734
+      longitude:
+        description: Initial longitude of the record in millionths of digits
+        type: number
+        example: -93.272107
+parameters:
+  agent_id:
+    name: agent_id
+    description: Public key of a particular agent
+    in: path
+    required: true
+    type: string
+    x-example: '02178c1bcdb25407394348f1ff5273adae287d8ea328184546837957e71c7de57a'
+  record_id:
+    name: record_id
+    description: Id of a particular record
+    in: path
+    required: true
+    type: string
+    x-example: 'fish-44'
