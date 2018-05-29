@@ -20,7 +20,8 @@ RUN echo "deb apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 
  && apt-get update
 
 RUN apt-get install -y --allow-unauthenticated -q \
-    python3-pip
+    python3-pip \
+    python3-sawtooth-sdk
 
 RUN pip3 install \
     psycopg2-binary

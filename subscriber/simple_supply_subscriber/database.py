@@ -17,6 +17,7 @@ import logging
 import time
 
 import psycopg2
+from psycopg2.extras import RealDictCursor
 
 
 LOGGER = logging.getLogger(__name__)
@@ -24,7 +25,7 @@ LOGGER = logging.getLogger(__name__)
 
 CREATE_BLOCK_STMTS = """
 CREATE TABLE IF NOT EXISTS blocks (
-    block_num  integer PRIMARY KEY,
+    block_num  bigint PRIMARY KEY,
     block_id   varchar
 );
 """
@@ -42,8 +43,8 @@ CREATE TABLE IF NOT EXISTS auth (
 CREATE_RECORD_STMTS = """
 CREATE TABLE IF NOT EXISTS records (
     record_id        varchar PRIMARY KEY,
-    start_block_num  integer,
-    end_block_num    integer
+    start_block_num  bigint,
+    end_block_num    bigint
 );
 """
 
@@ -54,9 +55,9 @@ CREATE TABLE IF NOT EXISTS record_locations (
     record_id        varchar,
     latitude         numeric(9,6),
     longitude        numeric(9,6),
-    timestamp        integer,
-    start_block_num  integer,
-    end_block_num    integer
+    timestamp        bigint,
+    start_block_num  bigint,
+    end_block_num    bigint
 );
 """
 
@@ -66,9 +67,9 @@ CREATE TABLE IF NOT EXISTS record_owners (
     id               bigserial PRIMARY KEY,
     record_id        varchar,
     agent_id         varchar,
-    timestamp        integer,
-    start_block_num  integer,
-    end_block_num    integer
+    timestamp        bigint,
+    start_block_num  bigint,
+    end_block_num    bigint
 );
 """
 
@@ -78,9 +79,9 @@ CREATE TABLE IF NOT EXISTS agents (
     id               bigserial PRIMARY KEY,
     public_key       varchar,
     name             varchar,
-    timestamp        integer,
-    start_block_num  integer,
-    end_block_num    integer
+    timestamp        bigint,
+    start_block_num  bigint,
+    end_block_num    bigint
 );
 """
 
@@ -88,28 +89,26 @@ CREATE TABLE IF NOT EXISTS agents (
 class Database(object):
     """Simple object for managing a connection to a postgres database
     """
-    def __init__(self, host, port, name, user, password):
-        self._host = host
-        self._port = port
-        self._name = name
-        self._user = user
-        self._password = password
+    def __init__(self, dsn):
+        self._dsn = dsn
         self._conn = None
 
     def connect(self, retries=5, initial_delay=1, backoff=2):
         """Initializes a connection to the database
+
+        Args:
+            retries (int): Number of times to retry the connection
+            initial_delay (int): Number of seconds wait between reconnects
+            backoff (int): Multiplies the delay after each retry
         """
-        LOGGER.info('Connecting to database: %s:%s', self._host, self._port)
+        LOGGER.info('Connecting to database')
 
         delay = initial_delay
         for attempt in range(retries):
             try:
-                self._conn = psycopg2.connect(
-                    dbname=self._name,
-                    host=self._host,
-                    port=self._port,
-                    user=self._user,
-                    password=self._password)
+                self._conn = psycopg2.connect(self._dsn)
+                LOGGER.info('Successfully connected to database')
+                return
 
             except psycopg2.OperationalError:
                 LOGGER.debug(
@@ -119,17 +118,7 @@ class Database(object):
                 time.sleep(delay)
                 delay *= backoff
 
-            else:
-                break
-
-        else:
-            self._conn = psycopg2.connect(
-                dbname=self._name,
-                host=self._host,
-                port=self._port,
-                user=self._user,
-                password=self._password)
-
+        self._conn = psycopg2.connect(self._dsn)
         LOGGER.info('Successfully connected to database')
 
     def create_tables(self):
@@ -162,3 +151,106 @@ class Database(object):
         LOGGER.info('Disconnecting from database')
         if self._conn is not None:
             self._conn.close()
+
+    def commit(self):
+        self._conn.commit()
+
+    def rollback(self):
+        self._conn.rollback()
+
+    def drop_fork(self, block_num):
+        """Deletes all resources from a particular block_num
+        """
+        delete_agents = """
+        DELETE FROM agents WHERE start_block_num >= {}
+        """.format(block_num)
+        update_agents = """
+        UPDATE agents SET end_block_num = null
+        WHERE end_block_num >= {}
+        """.format(block_num)
+
+        delete_record_locations = """
+        DELETE FROM record_owners WHERE record_id =
+        (SELECT record_id FROM records WHERE start_block_num >= {})
+        """.format(block_num)
+        delete_record_owners = """
+        DELETE FROM record_owners WHERE record_id =
+        (SELECT record_id FROM records WHERE start_block_num >= {})
+        """.format(block_num)
+        delete_records = """
+        DELETE FROM records WHERE start_block_num >= {}
+        """.format(block_num)
+        update_records = """
+        UPDATE records SET end_block_num = null
+        WHERE end_block_num >= {}
+        """.format(block_num)
+
+        delete_blocks = """
+        DELETE FROM blocks WHERE block_num >= {}
+        """.format(block_num)
+
+        with self._conn.cursor() as cursor:
+            cursor.execute(delete_agents)
+            cursor.execute(update_agents)
+            cursor.execute(delete_record_locations)
+            cursor.execute(delete_record_owners)
+            cursor.execute(delete_records)
+            cursor.execute(update_records)
+            cursor.execute(delete_blocks)
+
+    def fetch_last_known_blocks(self, count):
+        """Fetches the specified number of most recent blocks
+        """
+        fetch = """
+        SELECT block_num, block_id FROM blocks
+        ORDER BY block_num DESC LIMIT {}
+        """.format(count)
+
+        with self._conn.cursor(cursor_factory=RealDictCursor) as cursor:
+            cursor.execute(fetch)
+            blocks = cursor.fetchall()
+
+        return blocks
+
+    def fetch_block(self, block_num):
+        fetch = """
+        SELECT block_num, block_id FROM blocks WHERE block_num = {}
+        """.format(block_num)
+
+        with self._conn.cursor(cursor_factory=RealDictCursor) as cursor:
+            cursor.execute(fetch)
+            block = cursor.fetchone()
+
+        return block
+
+    def insert_block(self, block_dict):
+        insert = """
+        INSERT INTO blocks (
+        block_num,
+        block_id)
+        VALUES ('{}', '{}');
+        """.format(
+            block_dict['block_num'],
+            block_dict['block_id'])
+
+        with self._conn.cursor() as cursor:
+            cursor.execute(insert)
+
+    def insert_agent(self, agent_dict):
+        insert = """
+        INSERT INTO agents (
+        public_key,
+        name,
+        timestamp,
+        start_block_num,
+        end_block_num)
+        VALUES ('{}', '{}', '{}', '{}', '{}');
+        """.format(
+            agent_dict['public_key'],
+            agent_dict['name'],
+            agent_dict['timestamp'],
+            agent_dict['start_block_num'],
+            agent_dict['end_block_num'])
+
+        with self._conn.cursor() as cursor:
+            cursor.execute(insert)

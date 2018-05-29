@@ -84,6 +84,7 @@ services:
         simple-supply-subscriber init \
           --db-host postgres \
           -vv
+        sleep 3
         simple-supply-subscriber subscribe \
           --db-host postgres \
           -C tcp://validator:4004 \
