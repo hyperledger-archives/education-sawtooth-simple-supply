@@ -64,6 +64,7 @@ services:
         simple-supply-rest-api \
           -B simple-supply-rest-api:8000 \
           -C validator:4004 \
+          --db-host postgres \
           -vv
       "
 

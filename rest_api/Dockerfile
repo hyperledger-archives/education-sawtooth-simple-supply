@@ -25,8 +25,10 @@ RUN apt-get install -y --allow-unauthenticated -q python3-grpcio-tools=1.1.3-1 \
     python3-sawtooth-sdk
 
 RUN pip3 install \
-    psycopg2-binary \
-    aiohttp
+    aiohttp \
+    aiopg \
+    psycopg2-binary
+
 
 WORKDIR /project/sawtooth-simple-supply
 
