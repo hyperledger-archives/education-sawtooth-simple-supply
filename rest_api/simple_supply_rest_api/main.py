@@ -22,12 +22,11 @@ from zmq.asyncio import ZMQEventLoop
 
 from sawtooth_sdk.processor.log import init_console_logging
 
-from sawtooth_rest_api.messaging import Connection
-
 from aiohttp import web
 
 from simple_supply_rest_api.route_handler import RouteHandler
 from simple_supply_rest_api.database import Database
+from simple_supply_rest_api.messaging import Messenger
 
 
 LOGGER = logging.getLogger(__name__)
@@ -78,13 +77,14 @@ def parse_args(args):
     return parser.parse_args(args)
 
 
-def start_rest_api(host, port, validator_connection, database):
+def start_rest_api(host, port, messenger, database):
     loop = asyncio.get_event_loop()
-    validator_connection.open()
-    app = web.Application(loop=loop)
-    app.on_cleanup.append(lambda app: validator_connection.close())
 
-    handler = RouteHandler(loop, validator_connection, database)
+    app = web.Application(loop=loop)
+
+    messenger.open_validator_connection()
+
+    handler = RouteHandler(loop, messenger, database)
 
     app.router.add_post('/authorization', handler.authorize)
 
@@ -112,16 +112,15 @@ def main():
     loop = ZMQEventLoop()
     asyncio.set_event_loop(loop)
 
-    validator_connection = None
     try:
         opts = parse_args(sys.argv[1:])
 
         init_console_logging(verbose_level=opts.verbose)
 
-        url = opts.connect
-        if "tcp://" not in url:
-            url = "tcp://" + url
-        validator_connection = Connection(url)
+        validator_url = opts.connect
+        if "tcp://" not in validator_url:
+            validator_url = "tcp://" + validator_url
+        messenger = Messenger(validator_url)
 
         database = Database(
             opts.db_host,
@@ -138,10 +137,9 @@ def main():
                   " host:port".format(opts.bind))
             sys.exit(1)
 
-        start_rest_api(host, port, validator_connection, database)
+        start_rest_api(host, port, messenger, database)
     except Exception as err:  # pylint: disable=broad-except
         LOGGER.exception(err)
         sys.exit(1)
     finally:
-        if validator_connection is not None:
-            validator_connection.close()
+        messenger.close_validator_connection()
