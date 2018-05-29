@@ -18,8 +18,12 @@ import logging
 
 import aiopg
 import psycopg2
+from psycopg2.extras import RealDictCursor
 
 
+LATEST_BLOCK_NUM = """
+SELECT max(block_num) FROM blocks
+"""
 LOGGER = logging.getLogger(__name__)
 
 
@@ -66,3 +70,36 @@ class Database(object):
         """Closes connection to the database
         """
         self._conn.close()
+
+    async def create_auth_entry(self,
+                                public_key,
+                                encrypted_private_key,
+                                hashed_password):
+        insert = """
+        INSERT INTO auth (
+            public_key,
+            encrypted_private_key,
+            hashed_password
+        )
+        VALUES ('{}', '{}', '{}');
+        """.format(
+            public_key,
+            encrypted_private_key.hex(),
+            hashed_password.hex())
+
+        async with self._conn.cursor() as cursor:
+            await cursor.execute(insert)
+
+        self._conn.commit()
+
+    async def fetch_agent_resource(self, public_key):
+        fetch = """
+        SELECT * FROM agents
+        WHERE public_key='{0}'
+        AND ({1}) >= start_block_num
+        AND ({1}) < end_block_num;
+        """.format(public_key, LATEST_BLOCK_NUM)
+
+        async with self._conn.cursor(cursor_factory=RealDictCursor) as cursor:
+            await cursor.execute(fetch)
+            return await cursor.fetchone()

@@ -27,6 +27,9 @@ RUN apt-get install -y --allow-unauthenticated -q python3-grpcio-tools=1.1.3-1 \
 RUN pip3 install \
     aiohttp \
     aiopg \
+    bcrypt \
+    itsdangerous \
+    pycrypto \
     psycopg2-binary
 
 
