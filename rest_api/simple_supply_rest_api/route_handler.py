@@ -25,6 +25,7 @@ from itsdangerous import TimedJSONWebSignatureSerializer as Serializer
 
 from simple_supply_rest_api.errors import ApiBadRequest
 from simple_supply_rest_api.errors import ApiInternalError
+from simple_supply_rest_api.errors import ApiNotFound
 
 
 LOGGER = logging.getLogger(__name__)
@@ -72,10 +73,16 @@ class RouteHandler(object):
         return json_response(response)
 
     async def list_agents(self, request):
-        raise HTTPNotImplemented()
+        agent_list = await self._database.fetch_all_agent_resources()
+        return json_response(agent_list)
 
     async def fetch_agent(self, request):
-        raise HTTPNotImplemented()
+        public_key = request.match_info.get('agent_id', '')
+        agent = await self._database.fetch_agent_resource(public_key)
+        if agent is None:
+            raise ApiNotFound(
+                'Agent with public key {} was not found'.format(public_key))
+        return json_response(agent)
 
     async def create_record(self, request):
         raise HTTPNotImplemented()
