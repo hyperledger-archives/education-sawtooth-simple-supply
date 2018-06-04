@@ -254,3 +254,94 @@ class Database(object):
 
         with self._conn.cursor() as cursor:
             cursor.execute(insert)
+
+    def insert_record(self, record_dict):
+        update_record = """
+        UPDATE records SET end_block_num = {}
+        WHERE end_block_num = {} AND record_id = '{}'
+        """.format(
+            record_dict['start_block_num'],
+            record_dict['end_block_num'],
+            record_dict['record_id'])
+
+        insert_record = """
+        INSERT INTO records (
+        record_id,
+        start_block_num,
+        end_block_num)
+        VALUES ('{}', '{}', '{}');
+        """.format(
+            record_dict['record_id'],
+            record_dict['start_block_num'],
+            record_dict['end_block_num'])
+
+        with self._conn.cursor() as cursor:
+            cursor.execute(update_record)
+            cursor.execute(insert_record)
+
+        self._insert_record_locations(record_dict)
+        self._insert_record_owners(record_dict)
+
+    def _insert_record_locations(self, record_dict):
+        update_record_locations = """
+        UPDATE record_locations SET end_block_num = {}
+        WHERE end_block_num = {} AND record_id = '{}'
+        """.format(
+            record_dict['start_block_num'],
+            record_dict['end_block_num'],
+            record_dict['record_id'])
+
+        insert_record_locations = [
+            """
+            INSERT INTO record_locations (
+            record_id,
+            latitude,
+            longitude,
+            timestamp,
+            start_block_num,
+            end_block_num)
+            VALUES ('{}', '{}', '{}', '{}', '{}', '{}');
+            """.format(
+                record_dict['record_id'],
+                location['latitude'],
+                location['longitude'],
+                location['timestamp'],
+                record_dict['start_block_num'],
+                record_dict['end_block_num'])
+            for location in record_dict['locations']
+        ]
+        with self._conn.cursor() as cursor:
+            cursor.execute(update_record_locations)
+            for insert in insert_record_locations:
+                cursor.execute(insert)
+
+    def _insert_record_owners(self, record_dict):
+        update_record_owners = """
+        UPDATE record_owners SET end_block_num = {}
+        WHERE end_block_num = {} AND record_id = '{}'
+        """.format(
+            record_dict['start_block_num'],
+            record_dict['end_block_num'],
+            record_dict['record_id'])
+
+        insert_record_owners = [
+            """
+            INSERT INTO record_owners (
+            record_id,
+            agent_id,
+            timestamp,
+            start_block_num,
+            end_block_num)
+            VALUES ('{}', '{}', '{}', '{}', '{}');
+            """.format(
+                record_dict['record_id'],
+                owner['agent_id'],
+                owner['timestamp'],
+                record_dict['start_block_num'],
+                record_dict['end_block_num'])
+            for owner in record_dict['owners']
+        ]
+        with self._conn.cursor() as cursor:
+            cursor.execute(update_record_owners)
+            for insert in insert_record_owners:
+                cursor.execute(insert)
