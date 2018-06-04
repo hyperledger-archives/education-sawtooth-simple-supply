@@ -21,11 +21,13 @@ from aiohttp.web import HTTPNotImplemented
 from aiohttp.web import json_response
 import bcrypt
 from Crypto.Cipher import AES
+from itsdangerous import BadSignature
 from itsdangerous import TimedJSONWebSignatureSerializer as Serializer
 
 from simple_supply_rest_api.errors import ApiBadRequest
 from simple_supply_rest_api.errors import ApiInternalError
 from simple_supply_rest_api.errors import ApiNotFound
+from simple_supply_rest_api.errors import ApiUnauthorized
 
 
 LOGGER = logging.getLogger(__name__)
@@ -37,7 +39,7 @@ class RouteHandler(object):
         self._messenger = messenger
         self._database = database
 
-    async def authorize(self, request):
+    async def authenticate(self, request):
         raise HTTPNotImplemented()
 
     async def create_agent(self, request):
@@ -99,6 +101,28 @@ class RouteHandler(object):
     async def update_record(self, request):
         raise HTTPNotImplemented()
 
+    async def _authorize(self, request):
+        token = request.headers.get('AUTHORIZATION')
+        if token is None:
+            raise ApiUnauthorized('No auth token provided')
+        token_prefixes = ('Bearer', 'Token')
+        for prefix in token_prefixes:
+            if prefix in token:
+                token = token.partition(prefix)[2].strip()
+        try:
+            token_dict = deserialize_auth_token(request.app['secret_key'],
+                                                token)
+        except BadSignature:
+            raise ApiUnauthorized('Invalid auth token')
+        public_key = token_dict.get('public_key')
+
+        auth_resource = await self._database.fetch_auth_resource(public_key)
+        if auth_resource is None:
+            raise ApiUnauthorized('Token is not associated with an agent')
+        return decrypt_private_key(request.app['aes_key'],
+                                   public_key,
+                                   auth_resource['encrypted_private_key'])
+
 
 async def decode_request(request):
     try:
@@ -120,6 +144,13 @@ def encrypt_private_key(aes_key, public_key, private_key):
     return cipher.encrypt(private_key)
 
 
+def decrypt_private_key(aes_key, public_key, encrypted_private_key):
+    init_vector = bytes.fromhex(public_key[:32])
+    cipher = AES.new(bytes.fromhex(aes_key), AES.MODE_CBC, init_vector)
+    private_key = cipher.decrypt(bytes.fromhex(encrypted_private_key))
+    return private_key
+
+
 def hash_password(password):
     return bcrypt.hashpw(bytes(password, 'utf-8'), bcrypt.gensalt())
 
@@ -133,3 +164,8 @@ def generate_auth_token(secret_key, public_key):
     serializer = Serializer(secret_key)
     token = serializer.dumps({'public_key': public_key})
     return token.decode('ascii')
+
+
+def deserialize_auth_token(secret_key, token):
+    serializer = Serializer(secret_key)
+    return serializer.loads(token)

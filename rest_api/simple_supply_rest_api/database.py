@@ -114,3 +114,12 @@ class Database(object):
         async with self._conn.cursor(cursor_factory=RealDictCursor) as cursor:
             await cursor.execute(fetch)
             return await cursor.fetchall()
+
+    async def fetch_auth_resource(self, public_key):
+        fetch = """
+        SELECT * FROM auth WHERE public_key='{}'
+        """.format(public_key)
+
+        async with self._conn.cursor(cursor_factory=RealDictCursor) as cursor:
+            await cursor.execute(fetch)
+            return await cursor.fetchone()
