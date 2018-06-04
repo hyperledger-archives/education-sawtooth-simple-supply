@@ -67,3 +67,10 @@ class ApiNotFound(_ApiError):
         self.status_code = 404
         self.message = 'Not Found: ' + message
         super().__init__()
+
+
+class ApiUnauthorized(_ApiError):
+    def __init__(self, message):
+        self.status_code = 401
+        self.message = 'Unauthorized: ' + message
+        super().__init__()
