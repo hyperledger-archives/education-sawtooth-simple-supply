@@ -84,6 +84,8 @@ def _apply_state_changes(database, events, block_num, block_id):
         database.insert_block({'block_num': block_num, 'block_id': block_id})
         if data_type == AddressSpace.AGENT:
             _apply_agent_change(database, block_num, resources)
+        if data_type == AddressSpace.RECORD:
+            _apply_record_change(database, block_num, resources)
         else:
             LOGGER.warning('Unsupported data type: %s', data_type)
 
@@ -106,3 +108,10 @@ def _apply_agent_change(database, block_num, agents):
         agent['start_block_num'] = block_num
         agent['end_block_num'] = MAX_BLOCK_NUMBER
         database.insert_agent(agent)
+
+
+def _apply_record_change(database, block_num, records):
+    for record in records:
+        record['start_block_num'] = block_num
+        record['end_block_num'] = MAX_BLOCK_NUMBER
+        database.insert_record(record)
