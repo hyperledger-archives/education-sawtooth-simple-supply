@@ -98,6 +98,100 @@ class SimpleSupplyTest(unittest.TestCase):
                 timestamp=1)[0]['status'],
             "COMMITTED")
 
+    def test_02_create_record(self):
+        """ Tests the CreateRecordAction validation rules.
+
+        Notes:
+            CreateRecordAction validation rules:
+                - Signer is registered as an agent
+                - record_id is not empty
+                - record_id does not belong to an existing record
+                - Latitude and longitude are valid
+        """
+
+        unsubmitted_key = make_key()
+        self.assertEqual(
+            self.client.create_record(
+                key=unsubmitted_key,
+                latitude=0,
+                longitude=0,
+                record_id='bar',
+                timestamp=1)[0]['status'],
+            "INVALID",
+            "Agent with the public key {} does not exist".format(
+                unsubmitted_key.get_public_key().as_hex()))
+
+        self.assertEqual(
+            self.client.create_record(
+                key=self.signer1,
+                latitude=0,
+                longitude=0,
+                record_id='',
+                timestamp=2)[0]['status'],
+            "INVALID",
+            "No record ID provided")
+
+        record_id_foo = 'foo'
+        self.assertEqual(
+            self.client.create_record(
+                key=self.signer1,
+                latitude=0,
+                longitude=0,
+                record_id='foo',
+                timestamp=3)[0]['status'],
+            "COMMITTED")
+
+        self.assertEqual(
+            self.client.create_record(
+                key=self.signer1,
+                latitude=0,
+                longitude=0,
+                record_id='foo',
+                timestamp=4)[0]['status'],
+            "INVALID",
+            "Identifier 'foo' belongs to an existing record")
+
+        self.assertEqual(
+            self.client.create_record(
+                key=self.signer1,
+                latitude=-91000000,
+                longitude=0,
+                record_id='badlat1',
+                timestamp=5)[0]['status'],
+            "INVALID",
+            "Latitude must be between -90 and 90. Got -91")
+
+        self.assertEqual(
+            self.client.create_record(
+                key=self.signer1,
+                latitude=91000000,
+                longitude=0,
+                record_id='badlat2',
+                timestamp=6)[0]['status'],
+            "INVALID",
+            "Latitude must be between -90 and 90. Got 91")
+
+        self.assertEqual(
+            self.client.create_record(
+                key=self.signer1,
+                latitude=0,
+                longitude=-181000000,
+                record_id='badlong1',
+                timestamp=7)[0]['status'],
+            "INVALID",
+            "Longitude must be between -180 and 180. Got -181")
+
+        self.assertEqual(
+            self.client.create_record(
+                key=self.signer1,
+                latitude=0,
+                longitude=181000000,
+                record_id='badlong2',
+                timestamp=8)[0]['status'],
+            "INVALID",
+            "Longitude must be between -180 and 180. Got 181")
+
+
 class SimpleSupplyClient(object):
 
     def __init__(self, url):
@@ -114,6 +208,18 @@ class SimpleSupplyClient(object):
         self._client.send_batches(batch_list)
         return self._client.get_statuses([batch_id], wait=10)
 
+    def create_record(self, key, latitude, longitude, record_id, timestamp):
+        batch = transaction_creation.make_create_record_transaction(
+            transaction_signer=key,
+            batch_signer=BATCH_KEY,
+            latitude=latitude,
+            longitude=longitude,
+            record_id=record_id,
+            timestamp=timestamp)
+        batch_id = batch.header_signature
+        batch_list = batch_pb2.BatchList(batches=[batch])
+        self._client.send_batches(batch_list)
+        return self._client.get_statuses([batch_id], wait=10)
 
 def wait_until_status(url, status_code=200, tries=5):
     """Pause the program until the given url returns the required status.
