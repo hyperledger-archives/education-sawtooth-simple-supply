@@ -37,6 +37,11 @@ def get_agent_address(public_key):
         public_key.encode('utf-8')).hexdigest()[:62]
 
 
+def get_record_address(record_id):
+    return NAMESPACE + RECORD_PREFIX + hashlib.sha512(
+        record_id.encode('utf-8')).hexdigest()[:62]
+
+
 def get_address_type(address):
     if address[:len(NAMESPACE)] != NAMESPACE:
         return AddressSpace.OTHER_FAMILY

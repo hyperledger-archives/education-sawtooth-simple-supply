@@ -123,3 +123,40 @@ class Database(object):
         async with self._conn.cursor(cursor_factory=RealDictCursor) as cursor:
             await cursor.execute(fetch)
             return await cursor.fetchone()
+
+    async def fetch_record_resource(self, record_id):
+        fetch_record = """
+        SELECT record_id FROM records
+        WHERE record_id='{0}'
+        AND ({1}) >= start_block_num
+        AND ({1}) < end_block_num;
+        """.format(record_id, LATEST_BLOCK_NUM)
+
+        fetch_record_locations = """
+        SELECT latitude, longitude, timestamp FROM record_locations
+        WHERE record_id='{0}'
+        AND ({1}) >= start_block_num
+        AND ({1}) < end_block_num;
+        """.format(record_id, LATEST_BLOCK_NUM)
+
+        fetch_record_owners = """
+        SELECT agent_id, timestamp FROM record_owners
+        WHERE record_id='{0}'
+        AND ({1}) >= start_block_num
+        AND ({1}) < end_block_num;
+        """.format(record_id, LATEST_BLOCK_NUM)
+
+        async with self._conn.cursor(cursor_factory=RealDictCursor) as cursor:
+            try:
+                await cursor.execute(fetch_record)
+                record = await cursor.fetchone()
+
+                await cursor.execute(fetch_record_locations)
+                record['locations'] = await cursor.fetchone()
+
+                await cursor.execute(fetch_record_owners)
+                record['owners'] = await cursor.fetchone()
+
+                return record
+            except TypeError:
+                return None
