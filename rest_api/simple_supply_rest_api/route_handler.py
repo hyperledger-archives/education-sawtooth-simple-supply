@@ -87,7 +87,25 @@ class RouteHandler(object):
         return json_response(agent)
 
     async def create_record(self, request):
-        raise HTTPNotImplemented()
+        private_key = await self._authorize(request)
+
+        body = await decode_request(request)
+        required_fields = ['latitude', 'longitude', 'record_id']
+        validate_fields(required_fields, body)
+
+        await self._messenger.send_create_record_transaction(
+            private_key=private_key,
+            latitude=body.get('latitude'),
+            longitude=body.get('longitude'),
+            record_id=body.get('record_id'),
+            timestamp=get_time())
+
+        record = await self._database.fetch_record_resource(
+            body.get('record_id'))
+        if record is None:
+            raise ApiInternalError(
+                'Transaction committed but not yet reported')
+        return json_response(record)
 
     async def list_records(self, request):
         raise HTTPNotImplemented()

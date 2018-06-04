@@ -63,6 +63,53 @@ def make_create_agent_transaction(transaction_signer,
         batch_signer=batch_signer)
 
 
+def make_create_record_transaction(transaction_signer,
+                                   batch_signer,
+                                   latitude,
+                                   longitude,
+                                   record_id,
+                                   timestamp):
+    """Make a CreateRecordAction transaction and wrap it in a batch
+
+    Args:
+        transaction_signer (sawtooth_signing.Signer): The transaction key pair
+        batch_signer (sawtooth_signing.Signer): The batch key pair
+        latitude (int): Initial latitude of the record
+        longitude (int): Initial latitude of the record
+        record_id (str): Unique ID of the record
+        timestamp (int): Unix UTC timestamp of when the agent is created
+
+    Returns:
+        batch_pb2.Batch: The transaction wrapped in a batch
+    """
+
+    inputs = [
+        addresser.get_agent_address(
+            transaction_signer.get_public_key().as_hex()),
+        addresser.get_record_address(record_id)
+    ]
+
+    outputs = [addresser.get_record_address(record_id)]
+
+    action = payload_pb2.CreateRecordAction(
+        record_id=record_id,
+        latitude=latitude,
+        longitude=longitude)
+
+    payload = payload_pb2.SimpleSupplyPayload(
+        action=payload_pb2.SimpleSupplyPayload.CREATE_RECORD,
+        create_record=action,
+        timestamp=timestamp)
+    payload_bytes = payload.SerializeToString()
+
+    return _make_batch(
+        payload_bytes=payload_bytes,
+        inputs=inputs,
+        outputs=outputs,
+        transaction_signer=transaction_signer,
+        batch_signer=batch_signer)
+
+
 def _make_batch(payload_bytes,
                 inputs,
                 outputs,
