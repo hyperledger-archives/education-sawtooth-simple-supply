@@ -160,3 +160,42 @@ class Database(object):
                 return record
             except TypeError:
                 return None
+
+    async def fetch_all_record_resources(self):
+        fetch_records = """
+        SELECT record_id FROM records
+        WHERE ({0}) >= start_block_num
+        AND ({0}) < end_block_num;
+        """.format(LATEST_BLOCK_NUM)
+
+        async with self._conn.cursor(cursor_factory=RealDictCursor) as cursor:
+            try:
+                await cursor.execute(fetch_records)
+                records = await cursor.fetchall()
+
+                for record in records:
+                    fetch_record_locations = """
+                    SELECT latitude, longitude, timestamp
+                    FROM record_locations
+                    WHERE record_id='{0}'
+                    AND ({1}) >= start_block_num
+                    AND ({1}) < end_block_num;
+                    """.format(record['record_id'], LATEST_BLOCK_NUM)
+
+                    fetch_record_owners = """
+                    SELECT agent_id, timestamp
+                    FROM record_owners
+                    WHERE record_id='{0}'
+                    AND ({1}) >= start_block_num
+                    AND ({1}) < end_block_num;
+                    """.format(record['record_id'], LATEST_BLOCK_NUM)
+
+                    await cursor.execute(fetch_record_locations)
+                    record['locations'] = await cursor.fetchall()
+
+                    await cursor.execute(fetch_record_owners)
+                    record['owners'] = await cursor.fetchall()
+
+                return records
+            except TypeError:
+                return []
