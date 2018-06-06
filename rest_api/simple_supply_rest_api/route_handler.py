@@ -108,10 +108,17 @@ class RouteHandler(object):
         return json_response(record)
 
     async def list_records(self, request):
-        raise HTTPNotImplemented()
+        record_list = await self._database.fetch_all_record_resources()
+        return json_response(record_list)
 
     async def fetch_record(self, request):
-        raise HTTPNotImplemented()
+        record_id = request.match_info.get('record_id', '')
+        record = await self._database.fetch_record_resource(record_id)
+        if record is None:
+            raise ApiNotFound(
+                'Record with the record id '
+                '{} was not found'.format(record_id))
+        return json_response(record)
 
     async def transfer_record(self, request):
         raise HTTPNotImplemented()
