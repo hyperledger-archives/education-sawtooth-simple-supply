@@ -94,7 +94,7 @@ class Database(object):
 
     async def fetch_agent_resource(self, public_key):
         fetch = """
-        SELECT * FROM agents
+        SELECT public_key, name, timestamp FROM agents
         WHERE public_key='{0}'
         AND ({1}) >= start_block_num
         AND ({1}) < end_block_num;
