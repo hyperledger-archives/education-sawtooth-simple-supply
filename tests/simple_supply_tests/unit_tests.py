@@ -191,6 +191,58 @@ class SimpleSupplyTest(unittest.TestCase):
             "INVALID",
             "Longitude must be between -180 and 180. Got 181")
 
+    def test_03_transfer_record(self):
+        unsubmitted_key = make_key()
+        self.client.create_record(
+                key=self.signer1,
+                latitude=0,
+                longitude=0,
+                record_id='transfer1',
+                timestamp=1)
+
+        self.client.create_record(
+                key=self.signer1,
+                latitude=0,
+                longitude=0,
+                record_id='transfer2',
+                timestamp=2)
+
+        self.assertEqual(
+            self.client.transfer_record(
+                key=self.signer1,
+                receiving_agent=self.signer2.get_public_key().as_hex(),
+                record_id='transfer1',
+                timestamp=3)[0]['status'],
+                "COMMITTED")
+
+        self.assertEqual(
+            self.client.transfer_record(
+                key=self.signer1,
+                receiving_agent=unsubmitted_key.get_public_key().as_hex(),
+                record_id='transfer2',
+                timestamp=4)[0]['status'],
+                "INVALID",
+                "Agent with the public key {} does not exist".format(
+                unsubmitted_key.get_public_key().as_hex()))
+
+        self.assertEqual(
+            self.client.transfer_record(
+                key=self.signer1,
+                receiving_agent=self.signer2.get_public_key().as_hex(),
+                record_id='doesntexist',
+                timestamp=5)[0]['status'],
+                "INVALID",
+                "Record with the record id doesntexist does not exist")
+
+        self.assertEqual(
+            self.client.transfer_record(
+                key=self.signer1,
+                receiving_agent=self.signer2.get_public_key().as_hex(),
+                record_id='transfer1',
+                timestamp=6)[0]['status'],
+                "INVALID",
+                "Transaction signer is not the owner of the record")
+
 
 class SimpleSupplyClient(object):
 
@@ -214,6 +266,18 @@ class SimpleSupplyClient(object):
             batch_signer=BATCH_KEY,
             latitude=latitude,
             longitude=longitude,
+            record_id=record_id,
+            timestamp=timestamp)
+        batch_id = batch.header_signature
+        batch_list = batch_pb2.BatchList(batches=[batch])
+        self._client.send_batches(batch_list)
+        return self._client.get_statuses([batch_id], wait=10)
+
+    def transfer_record(self, key, receiving_agent, record_id, timestamp):
+        batch = transaction_creation.make_transfer_record_transaction(
+            transaction_signer=key,
+            batch_signer=BATCH_KEY,
+            receiving_agent=receiving_agent,
             record_id=record_id,
             timestamp=timestamp)
         batch_id = batch.header_signature

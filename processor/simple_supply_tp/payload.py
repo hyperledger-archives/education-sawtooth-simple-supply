@@ -35,6 +35,9 @@ class SimpleSupplyPayload(object):
         if self._transaction.HasField('create_record'):
             return self._transaction.create_record
 
+        if self._transaction.HasField('transfer_record'):
+            return self._transaction.transfer_record
+
         return None
 
     @property

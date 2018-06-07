@@ -42,7 +42,8 @@ CREATE TABLE IF NOT EXISTS auth (
 
 CREATE_RECORD_STMTS = """
 CREATE TABLE IF NOT EXISTS records (
-    record_id        varchar PRIMARY KEY,
+    id               bigserial PRIMARY KEY,
+    record_id        varchar,
     start_block_num  bigint,
     end_block_num    bigint
 );
