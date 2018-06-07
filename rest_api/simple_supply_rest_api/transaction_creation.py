@@ -110,6 +110,50 @@ def make_create_record_transaction(transaction_signer,
         batch_signer=batch_signer)
 
 
+def make_transfer_record_transaction(transaction_signer,
+                                     batch_signer,
+                                     receiving_agent,
+                                     record_id,
+                                     timestamp):
+    """Make a CreateRecordAction transaction and wrap it in a batch
+
+    Args:
+        transaction_signer (sawtooth_signing.Signer): The transaction key pair
+        batch_signer (sawtooth_signing.Signer): The batch key pair
+        receiving_agent (str): Public key of the agent receiving the record
+        record_id (str): Unique ID of the record
+        timestamp (int): Unix UTC timestamp of when the record is transferred
+
+    Returns:
+        batch_pb2.Batch: The transaction wrapped in a batch
+    """
+    sending_agent_address = addresser.get_agent_address(
+        transaction_signer.get_public_key().as_hex())
+    receiving_agent_address = addresser.get_agent_address(receiving_agent)
+    record_address = addresser.get_record_address(record_id)
+
+    inputs = [sending_agent_address, receiving_agent_address, record_address]
+
+    outputs = [record_address]
+
+    action = payload_pb2.TransferRecordAction(
+        record_id=record_id,
+        receiving_agent=receiving_agent)
+
+    payload = payload_pb2.SimpleSupplyPayload(
+        action=payload_pb2.SimpleSupplyPayload.TRANSFER_RECORD,
+        transfer_record=action,
+        timestamp=timestamp)
+    payload_bytes = payload.SerializeToString()
+
+    return _make_batch(
+        payload_bytes=payload_bytes,
+        inputs=inputs,
+        outputs=outputs,
+        transaction_signer=transaction_signer,
+        batch_signer=batch_signer)
+
+
 def _make_batch(payload_bytes,
                 inputs,
                 outputs,

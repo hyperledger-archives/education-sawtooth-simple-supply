@@ -155,7 +155,11 @@ paths:
         '200':
           description: Success response with updated record
           schema:
-            $ref: '#/definitions/RecordObject'
+            type: object
+            properties:
+              data:
+                type: string
+                example: Transfer record transaction submitted
         '400':
           $ref: '#/responses/400BadRequest'
         '404':
