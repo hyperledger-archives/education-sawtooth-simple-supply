@@ -121,7 +121,22 @@ class RouteHandler(object):
         return json_response(record)
 
     async def transfer_record(self, request):
-        raise HTTPNotImplemented()
+        private_key = await self._authorize(request)
+
+        body = await decode_request(request)
+        required_fields = ['receiving_agent']
+        validate_fields(required_fields, body)
+
+        record_id = request.match_info.get('record_id', '')
+
+        await self._messenger.send_transfer_record_transaction(
+            private_key=private_key,
+            receiving_agent=body['receiving_agent'],
+            record_id=record_id,
+            timestamp=get_time())
+
+        return json_response(
+            {'data': 'Transfer record transaction submitted'})
 
     async def update_record(self, request):
         raise HTTPNotImplemented()

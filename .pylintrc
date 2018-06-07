@@ -327,7 +327,7 @@ function-naming-style=snake_case
 
 # Regular expression matching correct function names. Overrides function-
 # naming-style
-#function-rgx=
+function-rgx=[a-z_][a-z0-9_]{2,40}$
 
 # Good variable names which should always be accepted, separated by a comma
 good-names=i,
@@ -352,7 +352,7 @@ method-naming-style=snake_case
 
 # Regular expression matching correct method names. Overrides method-naming-
 # style
-#method-rgx=
+method-rgx=[a-z_][a-z0-9_]{2,40}$
 
 # Naming style matching correct module names
 module-naming-style=snake_case
