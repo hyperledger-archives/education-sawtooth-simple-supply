@@ -45,6 +45,11 @@ class SimpleSupplyPayload(object):
                 payload_pb2.SimpleSupplyPayload.TRANSFER_RECORD:
             return self._transaction.transfer_record
 
+        if self._transaction.HasField('update_record') and \
+            self._transaction.action == \
+                payload_pb2.SimpleSupplyPayload.UPDATE_RECORD:
+            return self._transaction.update_record
+
         raise InvalidTransaction('Action does not match payload data')
 
     @property
