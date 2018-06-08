@@ -29,6 +29,8 @@ from simple_supply_rest_api.transaction_creation import \
     make_create_record_transaction
 from simple_supply_rest_api.transaction_creation import \
     make_transfer_record_transaction
+from simple_supply_rest_api.transaction_creation import \
+    make_update_record_transaction
 
 
 class Messenger(object):
@@ -94,6 +96,23 @@ class Messenger(object):
             transaction_signer=transaction_signer,
             batch_signer=self._batch_signer,
             receiving_agent=receiving_agent,
+            record_id=record_id,
+            timestamp=timestamp)
+        await self._send_and_wait_for_commit(batch)
+
+    async def send_update_record_transaction(self,
+                                             private_key,
+                                             latitude,
+                                             longitude,
+                                             record_id,
+                                             timestamp):
+        transaction_signer = self._crypto_factory.new_signer(
+            secp256k1.Secp256k1PrivateKey.from_hex(private_key))
+        batch = make_update_record_transaction(
+            transaction_signer=transaction_signer,
+            batch_signer=self._batch_signer,
+            latitude=latitude,
+            longitude=longitude,
             record_id=record_id,
             timestamp=timestamp)
         await self._send_and_wait_for_commit(batch)
