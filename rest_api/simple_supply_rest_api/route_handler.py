@@ -139,7 +139,23 @@ class RouteHandler(object):
             {'data': 'Transfer record transaction submitted'})
 
     async def update_record(self, request):
-        raise HTTPNotImplemented()
+        private_key = await self._authorize(request)
+
+        body = await decode_request(request)
+        required_fields = ['latitude', 'longitude']
+        validate_fields(required_fields, body)
+
+        record_id = request.match_info.get('record_id', '')
+
+        await self._messenger.send_update_record_transaction(
+            private_key=private_key,
+            latitude=body['latitude'],
+            longitude=body['longitude'],
+            record_id=record_id,
+            timestamp=get_time())
+
+        return json_response(
+            {'data': 'Update record transaction submitted'})
 
     async def _authorize(self, request):
         token = request.headers.get('AUTHORIZATION')

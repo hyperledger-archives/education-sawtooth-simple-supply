@@ -154,6 +154,52 @@ def make_transfer_record_transaction(transaction_signer,
         batch_signer=batch_signer)
 
 
+def make_update_record_transaction(transaction_signer,
+                                   batch_signer,
+                                   latitude,
+                                   longitude,
+                                   record_id,
+                                   timestamp):
+    """Make a CreateRecordAction transaction and wrap it in a batch
+
+    Args:
+        transaction_signer (sawtooth_signing.Signer): The transaction key pair
+        batch_signer (sawtooth_signing.Signer): The batch key pair
+        latitude (int): Updated latitude of the location
+        longitude (int): Updated longitude of the location
+        record_id (str): Unique ID of the record
+        timestamp (int): Unix UTC timestamp of when the record is updated
+
+    Returns:
+        batch_pb2.Batch: The transaction wrapped in a batch
+    """
+    agent_address = addresser.get_agent_address(
+        transaction_signer.get_public_key().as_hex())
+    record_address = addresser.get_record_address(record_id)
+
+    inputs = [agent_address, record_address]
+
+    outputs = [record_address]
+
+    action = payload_pb2.UpdateRecordAction(
+        record_id=record_id,
+        latitude=latitude,
+        longitude=longitude)
+
+    payload = payload_pb2.SimpleSupplyPayload(
+        action=payload_pb2.SimpleSupplyPayload.UPDATE_RECORD,
+        update_record=action,
+        timestamp=timestamp)
+    payload_bytes = payload.SerializeToString()
+
+    return _make_batch(
+        payload_bytes=payload_bytes,
+        inputs=inputs,
+        outputs=outputs,
+        transaction_signer=transaction_signer,
+        batch_signer=batch_signer)
+
+
 def _make_batch(payload_bytes,
                 inputs,
                 outputs,
