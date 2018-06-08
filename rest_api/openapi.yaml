@@ -206,13 +206,13 @@ definitions:
       public_key:
         description: The agent's unique public key
         type: string
-        example: '02178c1bcdb25407394348f1ff5273adae287d8ea328184546837957e71c7de57a'
+        example: 02178c1bcdb25407394348f1ff5273adae287d8ea328184546837957e71c7de57a
       name:
         description: A human-readable name identifying the agent
         type: string
-        example: 'Alice'
+        example: Alice
       timestamp:
-        description: Approximately when the agent was registered, as a Unix UTC timestamp
+        description: 'Approximately when the agent was registered, as a Unix UTC timestamp'
         type: number
         example: 20180124130651
   AuthCredentials:
@@ -220,11 +220,11 @@ definitions:
       public_key:
         description: The agent's unique public key
         type: string
-        example: '02178c1bcdb25407394348f1ff5273adae287d8ea328184546837957e71c7de57a'
+        example: 02178c1bcdb25407394348f1ff5273adae287d8ea328184546837957e71c7de57a
       password:
         description: Password of the agent attempting to authenticate
         type: string
-        example: 'password12345'
+        example: password12345
   AuthToken:
     description: A token used to authorize client requests
     type: string
@@ -235,17 +235,17 @@ definitions:
       error:
         description: A message describing the error that occured
         type: string
-        example: 'A record can only be transferred by its owner'
+        example: A record can only be transferred by its owner
   LocationObject:
     properties:
       latitude:
         description: Latitude of the record in millionths of digits
         type: number
-        example: 44.982734
+        example: 44982734
       longitude:
         description: Longitude of the record in millionths of digits
         type: number
-        example: -93.272107
+        example: -93272107
       timestamp:
         description: Unix UTC timestamp of when the Location update was submitted
         type: number
@@ -255,25 +255,25 @@ definitions:
       name:
         description: A human-readable name identifying the new agent
         type: string
-        example: 'Alice'
+        example: Alice
       password:
         description: Password of the agent attempting to authenticate
         type: string
-        example: 'password12345'
+        example: password12345
   NewRecordBody:
     properties:
       latitude:
         description: Initial latitude of the record in millionths of digits
         type: number
-        example: 44.982734
+        example: 44982734
       longitude:
         description: Initial longitude of the record in millionths of digits
         type: number
-        example: -93.272107
+        example: -93272107
       record_id:
         description: User-defined natural key which identifies the object
         type: string
-        example: 'fish-44'
+        example: fish-44
   OwnerObject:
     properties:
       agent_id:
@@ -289,7 +289,7 @@ definitions:
       record_id:
         description: The user-defined natural key which identifies the record
         type: string
-        example: 'fish-44'
+        example: fish-44
       owners:
         type: array
         items:
@@ -303,17 +303,17 @@ definitions:
       receiving_agent:
         description: Public key of a particular agent
         type: string
-        example: '02178c1bcdb25407394348f1ff5273adae287d8ea328184546837957e71c7de57a'
+        example: 02178c1bcdb25407394348f1ff5273adae287d8ea328184546837957e71c7de57a
   UpdateRecordBody:
     properties:
       latitude:
         description: Initial latitude of the record in millionths of digits
         type: number
-        example: 44.982734
+        example: 44982734
       longitude:
         description: Initial longitude of the record in millionths of digits
         type: number
-        example: -93.272107
+        example: -93272107
 parameters:
   agent_id:
     name: agent_id
@@ -321,11 +321,11 @@ parameters:
     in: path
     required: true
     type: string
-    x-example: '02178c1bcdb25407394348f1ff5273adae287d8ea328184546837957e71c7de57a'
+    x-example: 02178c1bcdb25407394348f1ff5273adae287d8ea328184546837957e71c7de57a
   record_id:
     name: record_id
     description: Id of a particular record
     in: path
     required: true
     type: string
-    x-example: 'fish-44'
+    x-example: fish-44
