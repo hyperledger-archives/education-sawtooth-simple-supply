@@ -53,8 +53,8 @@ CREATE_RECORD_LOCATION_STMTS = """
 CREATE TABLE IF NOT EXISTS record_locations (
     id               bigserial PRIMARY KEY,
     record_id        varchar,
-    latitude         numeric(9,6),
-    longitude        numeric(9,6),
+    latitude         bigint,
+    longitude        bigint,
     timestamp        bigint,
     start_block_num  bigint,
     end_block_num    bigint
