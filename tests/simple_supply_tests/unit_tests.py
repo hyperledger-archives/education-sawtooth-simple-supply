@@ -51,6 +51,7 @@ class SimpleSupplyTest(unittest.TestCase):
         cls.client = SimpleSupplyClient(REST_URL)
         cls.signer1 = make_key()
         cls.signer2 = make_key()
+        cls.bad_signer = make_key()
 
     def test_00_timestamp(self):
         """ Tests the timestamp validation rules.
@@ -109,17 +110,16 @@ class SimpleSupplyTest(unittest.TestCase):
                 - Latitude and longitude are valid
         """
 
-        unsubmitted_key = make_key()
         self.assertEqual(
             self.client.create_record(
-                key=unsubmitted_key,
+                key=self.bad_signer,
                 latitude=0,
                 longitude=0,
                 record_id='bar',
                 timestamp=1)[0]['status'],
             "INVALID",
             "Agent with the public key {} does not exist".format(
-                unsubmitted_key.get_public_key().as_hex()))
+                self.bad_signer.get_public_key().as_hex()))
 
         self.assertEqual(
             self.client.create_record(
@@ -192,7 +192,6 @@ class SimpleSupplyTest(unittest.TestCase):
             "Longitude must be between -180 and 180. Got 181")
 
     def test_03_transfer_record(self):
-        unsubmitted_key = make_key()
         self.client.create_record(
                 key=self.signer1,
                 latitude=0,
@@ -218,12 +217,12 @@ class SimpleSupplyTest(unittest.TestCase):
         self.assertEqual(
             self.client.transfer_record(
                 key=self.signer1,
-                receiving_agent=unsubmitted_key.get_public_key().as_hex(),
+                receiving_agent=self.bad_signer.get_public_key().as_hex(),
                 record_id='transfer2',
                 timestamp=4)[0]['status'],
                 "INVALID",
                 "Agent with the public key {} does not exist".format(
-                unsubmitted_key.get_public_key().as_hex()))
+                self.bad_signer.get_public_key().as_hex()))
 
         self.assertEqual(
             self.client.transfer_record(
@@ -243,6 +242,62 @@ class SimpleSupplyTest(unittest.TestCase):
                 "INVALID",
                 "Transaction signer is not the owner of the record")
 
+    def test_04_update_record(self):
+        self.client.create_record(
+            key=self.signer1,
+            latitude=0,
+            longitude=0,
+            record_id='update1',
+            timestamp=0)
+
+        self.assertEqual(
+            self.client.update_record(
+                key=self.signer1,
+                latitude=90000000,
+                longitude=180000000,
+                record_id='update1',
+                timestamp=1)[0]['status'],
+            "COMMITTED")
+
+        self.assertEqual(
+            self.client.update_record(
+                key=self.signer1,
+                latitude=0,
+                longitude=0,
+                record_id='notarecord',
+                timestamp=2)[0]['status'],
+            "INVALID",
+            "Record with the record id notarecord does not exist")
+
+        self.assertEqual(
+            self.client.update_record(
+                key=self.signer2,
+                latitude=90000000,
+                longitude=180000000,
+                record_id='update1',
+                timestamp=3)[0]['status'],
+            "INVALID",
+            "Transaction signer is not the owner of the record")
+
+        self.assertEqual(
+            self.client.update_record(
+                key=self.signer1,
+                latitude=90000001,
+                longitude=180000000,
+                record_id='update1',
+                timestamp=4)[0]['status'],
+            "INVALID",
+            "Latitude must be between -90 and 90. Got 91")
+
+        self.assertEqual(
+            self.client.create_record(
+                key=self.signer1,
+                latitude=0,
+                longitude=-181000000,
+                record_id='update1',
+                timestamp=5)[0]['status'],
+            "INVALID",
+            "Longitude must be between -180 and 180. Got -181")
 
 class SimpleSupplyClient(object):
 
@@ -278,6 +333,19 @@ class SimpleSupplyClient(object):
             transaction_signer=key,
             batch_signer=BATCH_KEY,
             receiving_agent=receiving_agent,
+            record_id=record_id,
+            timestamp=timestamp)
+        batch_id = batch.header_signature
+        batch_list = batch_pb2.BatchList(batches=[batch])
+        self._client.send_batches(batch_list)
+        return self._client.get_statuses([batch_id], wait=10)
+
+    def update_record(self, key, latitude, longitude, record_id, timestamp):
+        batch = transaction_creation.make_update_record_transaction(
+            transaction_signer=key,
+            batch_signer=BATCH_KEY,
+            latitude=latitude,
+            longitude=longitude,
             record_id=record_id,
             timestamp=timestamp)
         batch_id = batch.header_signature

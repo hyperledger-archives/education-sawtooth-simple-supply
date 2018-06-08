@@ -70,6 +70,11 @@ class SimpleSupplyHandler(TransactionHandler):
                 state=state,
                 public_key=header.signer_public_key,
                 payload=payload)
+        elif payload.action == payload_pb2.SimpleSupplyPayload.UPDATE_RECORD:
+            _update_record(
+                state=state,
+                public_key=header.signer_public_key,
+                payload=payload)
         else:
             raise InvalidTransaction('Unhandled action')
 
@@ -123,6 +128,26 @@ def _transfer_record(state, public_key, payload):
 
     state.transfer_record(
         receiving_agent=payload.data.receiving_agent,
+        record_id=payload.data.record_id,
+        timestamp=payload.timestamp)
+
+
+def _update_record(state, public_key, payload):
+    record = state.get_record(payload.data.record_id)
+    if record is None:
+        raise InvalidTransaction('Record with the record id {} does not '
+                                 'exist'.format(payload.data.record_id))
+
+    if not _validate_record_owner(signer_public_key=public_key,
+                                  record=record):
+        raise InvalidTransaction(
+            'Transaction signer is not the owner of the record')
+
+    _validate_latlng(payload.data.latitude, payload.data.longitude)
+
+    state.update_record(
+        latitude=payload.data.latitude,
+        longitude=payload.data.longitude,
         record_id=payload.data.record_id,
         timestamp=payload.timestamp)
 
