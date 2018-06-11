@@ -17,7 +17,6 @@ from json.decoder import JSONDecodeError
 import logging
 import time
 
-from aiohttp.web import HTTPNotImplemented
 from aiohttp.web import json_response
 import bcrypt
 from Crypto.Cipher import AES
@@ -40,7 +39,25 @@ class RouteHandler(object):
         self._database = database
 
     async def authenticate(self, request):
-        raise HTTPNotImplemented()
+        body = await decode_request(request)
+        required_fields = ['public_key', 'password']
+        validate_fields(required_fields, body)
+
+        password = bytes(body.get('password'), 'utf-8')
+
+        auth_info = await self._database.fetch_auth_resource(
+            body.get('public_key'))
+        if auth_info is None:
+            raise ApiUnauthorized('No agent with that public key exists')
+
+        hashed_password = auth_info.get('hashed_password')
+        if not bcrypt.checkpw(password, bytes.fromhex(hashed_password)):
+            raise ApiUnauthorized('Incorrect public key or password')
+
+        token = generate_auth_token(
+            request.app['secret_key'], body.get('public_key'))
+
+        return json_response({'authorization': token})
 
     async def create_agent(self, request):
         body = await decode_request(request)
