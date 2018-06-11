@@ -12,12 +12,12 @@ securityDefinitions:
     in: header
     name: Authorization
 paths:
-  /authorization:
+  /authentication:
     post:
       description: Requests an authorization token for a registered agent
       parameters:
         - name: credentials
-          description: Authorization info to be authenticated by the server
+          description: Agent account info to be authenticated by the server
           in: body
           required: true
           schema:
