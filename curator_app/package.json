@@ -1,0 +1,33 @@
+{
+  "name": "curator_app",
+  "version": "1.0.0",
+  "description": "A Sawtooth Simple Supply client web app for tracking works of art",
+  "main": "",
+  "scripts": {
+    "watch": "webpack-dev-server --env development --hot",
+    "build": "webpack --env production"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "Apache-2.0",
+  "homepage": "https://github.com/hyperledger/education-sawtooth-simple-supply#readme",
+  "dependencies": {
+    "bootstrap": "^4.1.1",
+    "jquery": "^3.3.1",
+    "mithril": "^1.1.6",
+    "octicons": "^6.0.1",
+    "popper.js": "^1.14.3"
+  },
+  "devDependencies": {
+    "autoprefixer": "^8.6.2",
+    "css-loader": "^0.28.11",
+    "node-sass": "^4.9.0",
+    "postcss-loader": "^2.1.5",
+    "precss": "^3.1.2",
+    "sass-loader": "^7.0.3",
+    "style-loader": "^0.21.0",
+    "webpack": "^4.12.0",
+    "webpack-cli": "^3.0.4",
+    "webpack-dev-server": "^3.1.4"
+  }
+}

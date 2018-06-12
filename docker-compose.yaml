@@ -25,9 +25,13 @@ services:
     container_name: simple-supply-shell
     volumes:
       - .:/project/sawtooth-simple-supply
+      - /project/sawtooth-simple-supply/curator_app/node_modules
     command: |
       bash -c "
         simple-supply-protogen
+        cd curator_app/
+        npm run build
+        cd ../
         tail -f /dev/null
       "
 
@@ -147,3 +151,17 @@ services:
     restart: always
     ports:
       - '8080:8080'
+
+  curator-app:
+    build: ./curator_app
+    image: simple-supply-curator-app
+    container_name: curator-app
+    volumes:
+      - ./curator_app/public/:/usr/local/apache2/htdocs/
+    expose:
+      - 80
+    ports:
+      - '8040:80'
+    depends_on:
+      - simple-supply-shell
+      - simple-supply-rest-api
