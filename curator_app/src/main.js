@@ -26,10 +26,12 @@ const api = require('./services/api')
 const navigation = require('./components/navigation')
 
 const AgentList = require('./views/agent_list')
+const AgentDetailPage = require('./views/agent_detail')
 const RegisterArtworkForm = require('./views/register_artwork_form')
 const Dashboard = require('./views/dashboard')
 const LoginForm = require('./views/login_form')
 const ArtworkList = require('./views/artwork_list')
+const ArtworkDetailPage = require('./views/artwork_detail')
 const SignupForm = require('./views/signup_form')
 
 /**
@@ -95,6 +97,7 @@ const resolve = (view, restricted = false) => {
  * Clears user info from memory/storage and redirects.
  */
 const logout = () => {
+  api.clearAuth()
   m.route.set('/')
 }
 
@@ -102,7 +105,9 @@ const logout = () => {
  * Redirects to user's personal account page if logged in.
  */
 const profile = () => {
-  m.route.set('/')
+  const publicKey = api.getPublicKey()
+  if (publicKey) m.route.set(`/agents/${publicKey}`)
+  else m.route.set('/')
 }
 
 /**
@@ -112,11 +117,13 @@ document.addEventListener('DOMContentLoaded', () => {
   m.route(document.querySelector('#app'), '/', {
     '/': resolve(Dashboard),
     '/agents': resolve(AgentList),
+    '/agents/:publicKey': resolve(AgentDetailPage),
     '/register': resolve(RegisterArtworkForm, true),
     '/login': resolve(LoginForm),
     '/logout': { onmatch: logout },
     '/profile': { onmatch: profile},
     '/artworks': resolve(ArtworkList),
+    '/artworks/:recordId': resolve(ArtworkDetailPage),
     '/signup': resolve(SignupForm)
   })
 })
