@@ -101,9 +101,13 @@ paths:
             $ref: '#/definitions/NewRecordBody'
       responses:
         '200':
-          description: Success response with the new record
+          description: Success response
           schema:
-            $ref: '#/definitions/RecordObject'
+            type: object
+            properties:
+              data:
+                type: string
+                example: Create record transaction submitted
         '400':
           $ref: '#/responses/400BadRequest'
         '500':
@@ -153,7 +157,7 @@ paths:
             $ref: '#/definitions/TransferRecordBody'
       responses:
         '200':
-          description: Success response with updated record
+          description: Success response
           schema:
             type: object
             properties:
@@ -186,9 +190,13 @@ paths:
                 example: Update record transaction submitted
       responses:
         '200':
-          description: Success response with updated record
+          description: Success response
           schema:
-            $ref: '#/definitions/RecordObject'
+            type: object
+            properties:
+              data:
+                type: string
+                example: Update record transaction submitted
         '400':
           $ref: '#/responses/400BadRequest'
         '404':

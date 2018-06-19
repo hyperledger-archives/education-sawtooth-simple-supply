@@ -117,12 +117,8 @@ class RouteHandler(object):
             record_id=body.get('record_id'),
             timestamp=get_time())
 
-        record = await self._database.fetch_record_resource(
-            body.get('record_id'))
-        if record is None:
-            raise ApiInternalError(
-                'Transaction committed but not yet reported')
-        return json_response(record)
+        return json_response(
+            {'data': 'Create record transaction submitted'})
 
     async def list_records(self, request):
         record_list = await self._database.fetch_all_record_resources()
