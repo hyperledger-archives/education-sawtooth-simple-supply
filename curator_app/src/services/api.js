@@ -17,7 +17,9 @@
 'use strict'
 
 const m = require('mithril')
+const _ = require('lodash')
 
+const API_PATH = 'api/'
 const STORAGE_KEY = 'curator.authorization'
 let authToken = null
 
@@ -31,6 +33,72 @@ const getAuth = () => {
   return authToken
 }
 
+const setAuth = token => {
+  window.localStorage.setItem(STORAGE_KEY, token)
+  authToken = token
+  return authToken
+}
+
+const clearAuth = () => {
+  const token = getAuth()
+  window.localStorage.clear(STORAGE_KEY)
+  authToken = null
+  return token
+}
+
+/**
+ * Parses the authToken to return the logged in user's public key
+ */
+const getPublicKey = () => {
+  const token = getAuth()
+  if (!token) return null
+
+  const content = window.atob(token.split('.')[1])
+  return JSON.parse(content).public_key
+}
+
+// Adds Authorization header and prepends API path to url
+const baseRequest = opts => {
+  const Authorization = getAuth()
+  const authHeader = Authorization ? { Authorization } : {}
+  opts.headers = _.assign(opts.headers, authHeader)
+  opts.url = API_PATH + opts.url
+  return m.request(opts)
+}
+
+/**
+ * Submits a request to an api endpoint with an auth header if present
+ */
+const request = (method, endpoint, data) => {
+  return baseRequest({
+    method,
+    url: endpoint,
+    data
+  })
+}
+
+/**
+ * Method specific versions of request
+ */
+const get = _.partial(request, 'GET')
+const post = _.partial(request, 'POST')
+
+/**
+ * Sends the user an alert with the error message and reloads the page.
+ * Appropriate for requests triggered by user action.
+ */
+const alertError = err => {
+  console.error(err)
+  window.alert(err.error || err.message || err)
+  window.location.reload()
+}
+
 module.exports = {
-  getAuth
+  getAuth,
+  setAuth,
+  clearAuth,
+  getPublicKey,
+  post,
+  get,
+  alertError
 }
