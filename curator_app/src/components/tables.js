@@ -18,38 +18,33 @@
 'use strict'
 
 const m = require('mithril')
-const sortBy = require('lodash/sortBy')
-const Table = require('../components/tables.js')
-const api = require('../services/api')
 
-const AgentList = {
+const Table = {
   oninit (vnode) {
-    vnode.state.agents = []
-    api.get('agents').then((agents) => {
-        vnode.state.agents = sortBy(agents, 'name')
-    })
+    if (!vnode.attrs.noRowsText) {
+      vnode.attrs.noRowsText = 'No rows available'
+    }
   },
 
   view (vnode) {
     return [
-      m('.agent-list',
-        m(Table, {
-          headers: [
-            'Name',
-            'Key'
-          ],
-          rows: vnode.state.agents
-            .map((agent) => [
-              m(`a[href=/agents/${agent.public_key}]`,
-                { oncreate: m.route.link },
-                agent.name),
-              agent.public_key,
-            ]),
-          noRowsText: 'No agents found'
-        })
+      m('table.table',
+        m('thead',
+          m('tr',
+            vnode.attrs.headers.map((header) => m('th', header)))),
+        m('tbody',
+          vnode.attrs.rows.length > 0
+          ? vnode.attrs.rows
+              .map((row) =>
+                m('tr',
+                  row.map((col) => m('td', col))))
+          : m('tr',
+              m('td.text-center', { colSpan: vnode.attrs.headers.length },
+                vnode.attrs.noRowsText))
+        )
       )
     ]
   }
 }
 
-module.exports = AgentList
+module.exports = Table

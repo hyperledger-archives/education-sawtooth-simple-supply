@@ -18,38 +18,32 @@
 'use strict'
 
 const m = require('mithril')
-const sortBy = require('lodash/sortBy')
-const Table = require('../components/tables.js')
-const api = require('../services/api')
+const _ = require('lodash')
 
-const AgentList = {
-  oninit (vnode) {
-    vnode.state.agents = []
-    api.get('agents').then((agents) => {
-        vnode.state.agents = sortBy(agents, 'name')
-    })
+const api = require('../services/api')
+const layout = require('../components/layout')
+
+/**
+ * Displays information for a particular agent
+ */
+const AgentDetailPage = {
+  oninit(vnode) {
+    api.get(`agents/${vnode.attrs.publicKey}`)
+      .then(agent => {vnode.state.agent = agent})
+      .catch(api.alertError)
   },
 
   view (vnode) {
+    const publicKey = _.get(vnode.state, 'agent.public_key', '')
+    const timestamp = new Date(
+      _.get(vnode.state, 'agent.timestamp', '') * 1000).toString()
     return [
-      m('.agent-list',
-        m(Table, {
-          headers: [
-            'Name',
-            'Key'
-          ],
-          rows: vnode.state.agents
-            .map((agent) => [
-              m(`a[href=/agents/${agent.public_key}]`,
-                { oncreate: m.route.link },
-                agent.name),
-              agent.public_key,
-            ]),
-          noRowsText: 'No agents found'
-        })
-      )
+      layout.title(_.get(vnode.state, 'agent.name', '')),
+      m('.container',
+        layout.row(layout.staticField('Public Key', publicKey)),
+        layout.row(layout.staticField('Registered', timestamp)))
     ]
   }
 }
 
-module.exports = AgentList
+module.exports = AgentDetailPage
