@@ -238,7 +238,15 @@ class Database(object):
             cursor.execute(insert)
 
     def insert_agent(self, agent_dict):
-        insert = """
+        update_agent = """
+        UPDATE agents SET end_block_num = {}
+        WHERE end_block_num = {} AND public_key = '{}'
+        """.format(
+            agent_dict['start_block_num'],
+            agent_dict['end_block_num'],
+            agent_dict['public_key'])
+
+        insert_agent = """
         INSERT INTO agents (
         public_key,
         name,
@@ -254,7 +262,8 @@ class Database(object):
             agent_dict['end_block_num'])
 
         with self._conn.cursor() as cursor:
-            cursor.execute(insert)
+            cursor.execute(update_agent)
+            cursor.execute(insert_agent)
 
     def insert_record(self, record_dict):
         update_record = """
