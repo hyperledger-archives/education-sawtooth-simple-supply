@@ -91,7 +91,7 @@ class RouteHandler(object):
         }
         return json_response(response)
 
-    async def list_agents(self, request):
+    async def list_agents(self):
         agent_list = await self._database.fetch_all_agent_resources()
         return json_response(agent_list)
 
@@ -120,7 +120,7 @@ class RouteHandler(object):
         return json_response(
             {'data': 'Create record transaction submitted'})
 
-    async def list_records(self, request):
+    async def list_records(self):
         record_list = await self._database.fetch_all_record_resources()
         return json_response(record_list)
 
