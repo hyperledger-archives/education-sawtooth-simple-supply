@@ -113,9 +113,9 @@ def _create_record(state, public_key, payload):
 
 def _transfer_record(state, public_key, payload):
     if state.get_agent(payload.data.receiving_agent) is None:
-        raise InvalidTransaction('Agent with the public key {} does '
-                                 'not exist'.format(
-                                    payload.data.receiving_agent))
+        raise InvalidTransaction(
+            'Agent with the public key {} does '
+            'not exist'.format(payload.data.receiving_agent))
 
     record = state.get_record(payload.data.record_id)
     if record is None:
