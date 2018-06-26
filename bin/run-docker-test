@@ -205,7 +205,7 @@ def main():
             LOGGER.critical(
                 "There are residual containers on the host that need to be"
                 " cleaned up! Do `docker ps -a` and `docker newtork list` to"
-                " see what was left behind or use `run_docker_test --clean`!"
+                " see what was left behind or use `run-docker-test --clean`!"
             )
 
         if exit_status != 0:
@@ -284,7 +284,7 @@ def _check_for_existing_containers(compose_file, compose_dict, isolation_id):
             if container_name_to_create == existing_container_name:
                 raise RunDockerTestError(
                     "The container '{}' which would be created by this test"
-                    " already exists!\nDo:\n`run_docker_test --clean {}`\nto"
+                    " already exists!\nDo:\n`run-docker-test --clean {}`\nto"
                     " remove the container, or use docker manually.".format(
                         container_name_to_create, compose_file
                     )
@@ -297,7 +297,7 @@ def _check_for_existing_network(isolation_id, compose_file):
     if network_to_create in networks:
         raise RunDockerTestError(
             "The network '{}' which would be created by this test already"
-            " exists!\nDo:\n`run_docker_test --clean {}`\nto remove the"
+            " exists!\nDo:\n`run-docker-test --clean {}`\nto remove the"
             " network, or use docker manually.".format(
                 network_to_create, compose_file
             )
