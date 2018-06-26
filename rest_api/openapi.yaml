@@ -179,15 +179,11 @@ paths:
         - AuthToken: []
       parameters:
         - name: update
-          description: Success response
+          description: Updated owner parameter
           in: body
           required: true
           schema:
-            type: object
-            properties:
-              data:
-                type: string
-                example: Update record transaction submitted
+            $ref: '#/definitions/UpdateRecordBody'
       responses:
         '200':
           description: Success response
