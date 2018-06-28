@@ -24,7 +24,6 @@ from itsdangerous import BadSignature
 from itsdangerous import TimedJSONWebSignatureSerializer as Serializer
 
 from simple_supply_rest_api.errors import ApiBadRequest
-from simple_supply_rest_api.errors import ApiInternalError
 from simple_supply_rest_api.errors import ApiNotFound
 from simple_supply_rest_api.errors import ApiUnauthorized
 
@@ -78,18 +77,10 @@ class RouteHandler(object):
         await self._database.create_auth_entry(
             public_key, encrypted_private_key, hashed_password)
 
-        agent = await self._database.fetch_agent_resource(public_key)
-        if agent is None:
-            raise ApiInternalError(
-                'Transaction committed but not yet reported')
-        authorization = generate_auth_token(
+        token = generate_auth_token(
             request.app['secret_key'], public_key)
 
-        response = {
-            'authorization': authorization,
-            'agent': agent
-        }
-        return json_response(response)
+        return json_response({'authorization': token})
 
     async def list_agents(self):
         agent_list = await self._database.fetch_all_agent_resources()
