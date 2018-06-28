@@ -46,14 +46,12 @@ paths:
             $ref: '#/definitions/NewAgentBody'
       responses:
         '200':
-          description: Success response with the new agent and auth token
+          description: Success response with auth token
           schema:
             type: object
             properties:
               authorization:
                 $ref: '#/definitions/AuthToken'
-              agent:
-                $ref: '#/definitions/AgentObject'
         '400':
           $ref: '#/responses/400BadRequest'
         '500':
