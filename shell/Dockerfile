@@ -27,7 +27,7 @@ RUN apt-get install -y --allow-unauthenticated -q \
     python3-sawtooth-rest-api
 
 RUN curl -sL https://deb.nodesource.com/setup_6.x | bash - \
-    && apt-get install -y nodejs
+    && apt-get install -y nodejs npm nodejs-legacy
 
 RUN pip3 install \
     aiohttp \
