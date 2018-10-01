@@ -42,3 +42,10 @@ The available HTTP endpoints are:
 - Simple Supply REST API: **http://localhost:8000**
 - PostgreSQL Adminer: **http://localhost:8080**
 - Sawtooth REST API: **http://localhost:8008**
+
+## License
+
+The Sawtooth Simple Supply software and course material in the
+[course_modules](course_modules) subdirectory is licensed under a
+Creative Commons Attribution 4.0 International License.  You may obtain a copy
+of the license at: http://creativecommons.org/licenses/by/4.0/.
