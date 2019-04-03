@@ -15,7 +15,10 @@
 
 FROM ubuntu:xenial
 
-RUN echo "deb apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 8AA7AF1F1091A5FD" \
+RUN \
+ apt-get update \
+ && apt-get install -y -q curl gnupg \
+ && curl -sSL 'http://p80.pool.sks-keyservers.net/pks/lookup?op=get&search=0x8AA7AF1F1091A5FD' | apt-key add -  \
  && echo 'deb http://repo.sawtooth.me/ubuntu/1.0/stable xenial universe' >> /etc/apt/sources.list \
  && apt-get update
 
