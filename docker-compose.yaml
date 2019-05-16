@@ -29,6 +29,7 @@ services:
     command: |
       bash -c "
         simple-supply-protogen
+        simple-supply-fix-protogen
         cd curator_app/
         npm run build
         cd ../
