@@ -96,14 +96,14 @@ services:
       "
 
   settings-tp:
-    image: hyperledger/sawtooth-settings-tp:1.0
+    image: hyperledger/sawtooth-settings-tp:1.1
     container_name: sawtooth-settings-tp
     depends_on:
       - validator
     entrypoint: settings-tp -vv -C tcp://validator:4004
 
   rest-api:
-    image: hyperledger/sawtooth-rest-api:1.0
+    image: hyperledger/sawtooth-rest-api:1.1
     container_name: sawtooth-rest-api
     expose:
       - 8008
@@ -114,7 +114,7 @@ services:
     entrypoint: sawtooth-rest-api -vv -C tcp://validator:4004 --bind rest-api:8008
 
   validator:
-    image: hyperledger/sawtooth-validator:1.0
+    image: hyperledger/sawtooth-validator:1.1
     container_name: sawtooth-validator
     expose:
       - 4004
@@ -131,8 +131,20 @@ services:
         sawtooth-validator -vv \
           --endpoint tcp://validator:8800 \
           --bind component:tcp://eth0:4004 \
-          --bind network:tcp://eth0:8800
+          --bind network:tcp://eth0:8800 \
+          --bind consensus:tcp://eth0:5050
       "
+
+  devmode-engine:
+    image: hyperledger/sawtooth-devmode-engine-rust:1.1
+    expose:
+      - 5050
+    ports:
+      - '5050:5050'
+    container_name: sawtooth-devmode-engine-rust-default
+    depends_on:
+      - validator
+    entrypoint: devmode-engine-rust --connect tcp://validator:5050
 
   postgres:
     image: postgres:alpine
