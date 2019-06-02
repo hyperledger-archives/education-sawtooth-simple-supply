@@ -21,6 +21,7 @@ RUN echo "deb apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 
 
 RUN apt-get install -y --allow-unauthenticated -q \
     curl \
+    libffi-dev \
     python3-pip \
     python3-sawtooth-cli \
     python3-sawtooth-sdk \
