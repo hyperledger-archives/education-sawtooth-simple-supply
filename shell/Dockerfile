@@ -44,6 +44,8 @@ RUN pip3 install \
     pylint \
     pycodestyle
 
+RUN pip3 install --upgrade protobuf
+
 WORKDIR /project/sawtooth-simple-supply
 
 COPY curator_app/package.json /project/sawtooth-simple-supply/curator_app/

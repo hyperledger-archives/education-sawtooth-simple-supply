@@ -35,6 +35,7 @@ RUN pip3 install \
     pycrypto \
     psycopg2-binary
 
+RUN pip3 install --upgrade protobuf
 
 WORKDIR /project/sawtooth-simple-supply
 
